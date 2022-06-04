@@ -21,7 +21,7 @@ My contributions to the [#TidyTuesday challenge](https://github.com/rfordatascie
 
 <!-- toc -->
 
-2022-05-31 [Axios Company Reputation Poll](https://github.com/im-AMS/TidyTuesday/tree/master/Plots/2022/W23)
+2022-05-31 [Axios Company Reputation Poll](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W22)
 
 <!-- tocstop -->
 
@@ -29,11 +29,11 @@ My contributions to the [#TidyTuesday challenge](https://github.com/rfordatascie
 
 ***
 
-### [2022 Week 22:](https://github.com/im-AMS/TidyTuesday/tree/master/Plots/2022/W23) Axios Company Reputation Poll 
+### [2022 Week 22:](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W22) Axios Company Reputation Poll 
 
-![./Plots/2022/W22/W22-p1.png](https://github.com/im-AMS/TidyTuesday/tree/master/Plots/2022/W23/W22-p1.png)
+![./Plots/2022/W22/W22-p1.png](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W22/W22-p1.png)
 
-![./Plots/2022/W22/W22-p2.png](https://github.com/im-AMS/TidyTuesday/tree/master/Plots/2022/W23/W22-p2.png)
+![./Plots/2022/W22/W22-p2.png](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W22/W22-p2.png)
 
 ***
 
