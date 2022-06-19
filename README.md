@@ -21,6 +21,8 @@ My contributions to the [#TidyTuesday challenge](https://github.com/rfordatascie
 
 <!-- toc -->
 
+2022-06-14 [Drought Conditions in the US](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W24)
+
 2022-05-31 [Axios Company Reputation Poll](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W22)
 
 <!-- tocstop -->
@@ -29,11 +31,17 @@ My contributions to the [#TidyTuesday challenge](https://github.com/rfordatascie
 
 ***
 
+### [2022 Week 24:](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W24) Drought Conditions in the US 
+
+![./Plots/2022/W24/W24.gif](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W24/W24.gif)
+
 ### [2022 Week 22:](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W22) Axios Company Reputation Poll 
 
 ![./Plots/2022/W22/W22-p1.png](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W22/W22-p1.png)
 
 ![./Plots/2022/W22/W22-p2.png](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W22/W22-p2.png)
+
+
 
 ***
 
