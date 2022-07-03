@@ -20,6 +20,7 @@ My contributions to the [#TidyTuesday challenge](https://github.com/rfordatascie
   <summary>Contributions in chronological order (click to expand)</summary>
 
 <!-- toc -->
+2022-06-28 [Gender Pay Gap in UK](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W26)
 
 2022-06-14 [Drought Conditions in the US](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W24)
 
@@ -30,6 +31,10 @@ My contributions to the [#TidyTuesday challenge](https://github.com/rfordatascie
 </details>
 
 ***
+
+### [2022 Week 26:](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W26) Gender Pay Gap in UK
+
+![./Plots/2022/W26/W26.png](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W26/W26.png)
 
 ### [2022 Week 24:](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2022/W24) Drought Conditions in the US 
 
