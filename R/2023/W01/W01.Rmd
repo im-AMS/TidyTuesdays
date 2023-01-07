@@ -1,0 +1,293 @@
+---
+title: "TidyTuesday 2023 W01 - #BYOD - Naruto"
+author: "Aditya MS"
+date: "7th of Jan 2023"
+output:
+  html_document:
+    theme: paper
+    highlight: kate
+editor_options:
+  chunk_output_type: console
+---
+```{r configs}
+setwd(dirname( rstudioapi::getActiveDocumentContext()$path))
+DPI <- 500
+```
+
+
+```{r imports}
+library(tidyverse)
+library(patchwork)
+library(showtext)
+library(glue)
+library(gggibbous)
+library(ggtext)
+library(magick)
+
+font_add(family = "ninja-naruto", regular = "../../../fonts/ninja-naruto/ninja-naruto.regular.ttf")
+font_add(family = "bebas-neue", regular = "../../../fonts/Bebas-Neue/BebasNeue-Regular.ttf")
+
+font_add(
+  family = "rota",
+  regular = "../../../fonts/Rota/Rota-Regular.otf",
+  bold = "../../../fonts/Rota/Rota-Bold.otf",
+  italic = "../../../fonts/Rota/Rota-Italic.otf",
+  bolditalic = "../../../fonts/Rota/Rota-BoldItalic.otf"
+)
+
+showtext_opts(dpi = DPI)
+showtext_auto(enable = TRUE)
+```
+
+```{r wrangle}
+
+df <- read_csv("naruto_data.csv") |>
+  filter(!(Databook == "Second" & Team == "Akatsuki"))
+
+
+df_pivoted <- df |>
+  pivot_longer(2:10, names_to = "type")
+
+df_pivoted
+
+
+df_colors <- tibble(
+    Databook = c("First","Second","Third"),
+    color = c("#f9da9d","#f8be60","#f2a30b"),
+    info = c("1-119", "120-244", "Episodes between \n245-402")
+)
+
+df_colors
+```
+
+
+
+
+```{r}
+
+nudge_moon_by         <- 0.30
+nudge_points_value_by <- -0.15
+nudge_axis_title_by   <- 0.38
+moon_size             <- 18
+
+# define df for axis title as each Teams
+axis_title <-
+  df_pivoted |>
+  select(Team) |>
+  unique() |>
+  filter(Team != "Akatsuki") |>
+  mutate(
+    x = 40,
+    name = glue(
+      "<p>{Team} <img src='assets/{sub(' ','_',Team)}.png' height='50'></p>"
+    )
+  )
+
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Main Moon Plot
+main <- df_pivoted |>
+  # Wrangle
+  filter(type == "Total") |>
+  group_by(Databook, Team) |>
+  summarise(value = sum(value)) |>
+  filter(Team != "Akatsuki") |>
+  mutate(right_ratio = 1 - (value / (8 * 5 * 3)),
+         left_ratio = (value / (8 * 5 * 3)),
+  ) |>
+  ungroup() |>
+  mutate(Team = reorder(Team, value, max)) |>  # sort y-axis by max(value)
+  left_join(df_colors, by = "Databook") |>
+  
+  # GGPLOT
+  ggplot(aes(x = value, y = Team)) +
+  
+  # Outer outline for moon plots
+  geom_point(aes(color = color),
+             size = moon_size,
+             position = position_nudge(y = nudge_moon_by)) +
+  scale_color_identity() +
+  
+  # Grey part of moon (Total)
+  geom_moon(
+    aes(ratio = right_ratio, ),
+    right = T,
+    fill = "grey95",
+    color = NaN,
+    size = moon_size,
+    position = position_nudge(y = nudge_moon_by)
+  ) +
+  
+  # Points part of moon (value)
+  geom_moon(
+    aes(ratio = left_ratio),
+    right = F,
+    fill = NaN,
+    color = NaN,
+    size = moon_size,
+    position = position_nudge(y = nudge_moon_by)
+  ) +
+  
+  # Total Points for each moon along axis
+  ggtext::geom_richtext(
+    aes(
+      label = glue(
+        "<p style='font-family:serif;'>▲</p>\n{round(left_ratio*100)}"
+      )
+    ),
+    nudge_y = nudge_points_value_by,
+    lineheight = 0.2,
+    size = 12 / .pt,
+    color = "grey75",
+    family = c("bebas-neue"),
+    fill = NaN,
+    label.color = NaN,
+  ) +
+  
+  # Axis name with PNG
+  ggtext::geom_richtext(
+    data = axis_title,
+    aes(x = x, y = Team, label = name),
+    hjust = 0,
+    nudge_y = nudge_axis_title_by,
+    family = c("bebas-neue"),
+    size = 40 / .pt,
+    color = "grey80",
+    fill = NaN,
+    label.color = NaN,
+  ) +
+  
+  # Set scale
+  scale_x_continuous(limits = c(40, 122), expand = c(0, 0)) +
+  coord_cartesian(clip = "off") +
+  
+  # Lables
+  labs(title = "<span>**How strong  were  each  teams  in** </span><span style='font-family:ninja-naruto; color:#FF6A0C;'>Naruto</span> ?",
+       subtitle = "The plot represents how powerful each team was **out of 100** (not including their Sensei)<br>The data is from the official Data books released. Until now there have **been 3<br>releases** of databooks covering from **E001 - E402**.<br>The moon plot with the offset along x axis represents how strong each team is.",
+       caption = "*visualization by **Aditya MS** | Data by **naruto.fandom.com** | #TidyTuesday 2023_01*") +
+  
+  # Theme
+  theme_minimal() +
+  theme(
+    plot.background     = element_rect(fill = "#fff9e6", color = NaN),
+    plot.margin = margin(
+      t = 20,
+      b = 20,
+      l = 20,
+      r = 20
+    ),
+    plot.title = ggtext::element_markdown(
+      family = c("rota"),
+      color = "grey50",
+      size = 100 / .pt,
+      hjust = 0
+    ),
+    plot.subtitle = ggtext::element_markdown(
+      family = c("rota"),
+      color = "grey70",
+      size = 32 / .pt,
+      hjust = 0,
+      lineheight = 1.1,
+      margin = margin(b = 100 / .pt)
+    ),
+    plot.caption = ggtext::element_markdown(
+      color = "grey65",
+      family = c("rota"),
+      size = 28 / .pt,
+    ),
+    
+    panel.grid.major.x  = element_blank(),
+    panel.grid.minor.x  = element_blank(),
+    axis.title          = element_blank(),
+    axis.text         = element_blank(),
+    panel.grid.major.y  = element_line(
+      colour            = scales::alpha("grey80", 0.4),
+      linewidth         = 2,
+    )
+  )
+
+
+
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# Color swatch
+swatch <- df_colors |>
+  # Manually define points for each of swatches
+  mutate(
+    x = 0,
+    y = case_when(
+      Databook == "First" ~ 1,
+      Databook == "Second" ~ 2,
+      Databook == "Third" ~ 3,
+    )
+  ) |>
+  
+  # GGPLOT
+  ggplot(aes(x = x, y = y, color = color)) +
+  scale_color_identity() +
+  
+  # Each Point
+  geom_point(size = 18) +
+  
+  # axis scaling
+  scale_x_continuous(limits = c(-0.5, 0.1)) +
+  scale_y_continuous(limits = c(0.1, 3.8)) +
+  coord_cartesian(clip = "off") +
+  
+  # Label Each point
+  geom_text(
+    aes(label = info),
+    color = "grey65",
+    nudge_x = -0.5 / .pt,
+    hjust = 1,
+    size = 10 / .pt,
+    lineheight = 2 / .pt,
+    family = c("bebas-neue"),
+  ) +
+  
+  # THEMES
+  theme_void() +
+  theme(
+    plot.background = element_rect(fill = 'transparent', color = NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.background = element_rect(fill = 'transparent'),
+    legend.box.background = element_rect(fill = 'transparent'),
+  )
+
+# Inset swatch into main plot
+plot <-
+  (main + inset_element(
+    swatch,
+    left = 0.88,
+    bottom = 1.0,
+    right = 0.96,
+    top = 1.3
+  )) & theme(plot.background = element_rect(fill = "#fff9e6", color = NaN))
+
+# Save a full res version
+ggsave(
+  "../../../Plots/2023/W01/2023_01_FR.png",
+  plot = plot,
+  w = 15,
+  h = 8,
+  dpi = DPI,
+  units = "in"
+)
+
+
+# rescale it for Standard res
+image_write(
+  image_scale(image_read("../../../Plots/2023/W01/2023_01_FR.png"), "40%"),
+  path = "../../../Plots/2023/W01/2023_01_SD.png",
+  format = "png")
+```
+
+
+```{r session}
+Sys.time()
+git2r::repository()
+sessionInfo()
+```
+

@@ -1,0 +1,65 @@
+﻿Databook ,Ninjutsu ,Taijutsu ,Genjutsu ,Intelligence ,Strength ,Speed ,Stamina ,Hand seals ,Total,Name,Team,Sensei
+First ,2,1.5,1,1,2,2,4,1,14.5,Naruto Uzumaki,Team 7,Kakashi Hatake
+Second ,3,2,1,1.5,3,3,4,1,18.5,Naruto Uzumaki,Team 7,Kakashi Hatake
+Third ,4,3.5,2,3,3.5,3.5,5,1.5,26,Naruto Uzumaki,Team 7,Kakashi Hatake
+First ,1.5,1,3,3.5,0.5,1,1,4,15.5,Sakura Haruno,Team 7,Kakashi Hatake
+Second ,2,1,3.5,4,1,1,1.5,4,18,Sakura Haruno,Team 7,Kakashi Hatake
+Third ,3,3,3.5,4,3,3,2.5,4,26,Sakura Haruno,Team 7,Kakashi Hatake
+First ,2.5,2.5,1.5,2,2,3,2,3,18.5,Sasuke Uchiha,Team 7,Kakashi Hatake
+Second ,3.5,2.5,1.5,2.5,3,3.5,3,3,22.5,Sasuke Uchiha,Team 7,Kakashi Hatake
+Third ,5,3.5,4,3.5,3.5,4.5,3.5,4,31.5,Sasuke Uchiha,Team 7,Kakashi Hatake
+First,5,4,4,4.5,3.5,4,3,5,33,Kakashi Hatake,Team 7,Kakashi Hatake
+Second,5,4.5,4,5,3.5,4.5,3,5,34.5,Kakashi Hatake,Team 7,Kakashi Hatake
+Third,5,4.5,4,5,3.5,4.5,3,5,34.5,Kakashi Hatake,Team 7,Kakashi Hatake
+First ,3,2,0.5,0.5,3,1,2,1.5,13.5,Chōji Akimichi,Team 10,Asuma Sarutobi
+Second ,3.5,2,0.5,1,3.5,1,2.5,1.5,15.5,Chōji Akimichi,Team 10,Asuma Sarutobi
+Third ,3.5,3,1,2,4.5,2,3.5,1,20.5,Chōji Akimichi,Team 10,Asuma Sarutobi
+First,2.5,1.5,2.5,5,1.5,2,1.5,2.5,19,Shikamaru Nara,Team 10,Asuma Sarutobi
+Second,3,1.5,3,5,2,2.5,2,2.5,21.5,Shikamaru Nara,Team 10,Asuma Sarutobi
+Third,3.5,2,3,5,2,2.5,3,3,24,Shikamaru Nara,Team 10,Asuma Sarutobi
+First,2.5,1.5,1.5,2,0.5,2.5,2,2.5,15,Ino Yamanaka,Team 10,Asuma Sarutobi
+Second,3,1.5,1.5,2.5,1.5,2.5,2,2.5,17,Ino Yamanaka,Team 10,Asuma Sarutobi
+Third,3.5,1.5,3,3,2.5,2.5,2.5,2.5,21,Ino Yamanaka,Team 10,Asuma Sarutobi
+First,4.5,4,3.5,4,4,4.5,3.5,3.5,31.5,Asuma Sarutobi,Team 10,Asuma Sarutobi
+Second,4.5,4.5,3.5,4.5,4,4.5,3.5,3.5,32.5,Asuma Sarutobi,Team 10,Asuma Sarutobi
+Third,4.5,4.5,3.5,4.5,4,4.5,3.5,3.5,32.5,Asuma Sarutobi,Team 10,Asuma Sarutobi
+First,3.5,1.5,2,3,1.5,1.5,2,2,17,Shino Aburame,Team 8,Kurenai Yūhi
+Second,3.5,1.5,2,3.5,1.5,2,2.5,2,18.5,Shino Aburame,Team 8,Kurenai Yūhi
+Third,4,1.5,2,4,1.5,3,3,2,21,Shino Aburame,Team 8,Kurenai Yūhi
+First,1.5,2.5,0.5,1,2.5,3.5,1.5,1.5,14.5,Kiba Inuzuka,Team 8,Kurenai Yūhi
+Second,2.5,2.5,0.5,1.5,3,4,2,1.5,17.5,Kiba Inuzuka,Team 8,Kurenai Yūhi
+Third,3.5,3,2,2,3,4.5,2.5,1.5,22,Kiba Inuzuka,Team 8,Kurenai Yūhi
+First,1.5,2.5,1,2.5,1,2,1.5,2,14,Hinata Hyūga,Team 8,Kurenai Yūhi
+Second,1.5,3,1,3,1,2,1.5,2,15,Hinata Hyūga,Team 8,Kurenai Yūhi
+Third,3,3.5,2.5,3.5,1.5,2.5,2,3,21.5,Hinata Hyūga,Team 8,Kurenai Yūhi
+First,3.5,4,5,4,2,4,2,4.5,29,Kurenai Yūhi,Team 8,Kurenai Yūhi
+Second,4,4,5,4,2,4,2,4.5,29.5,Kurenai Yūhi,Team 8,Kurenai Yūhi
+Third,4,4,5,4,2,4,2,4.5,29.5,Kurenai Yūhi,Team 8,Kurenai Yūhi
+First,2.5,3.5,2,2.5,2.5,3,2,3,21,Neji Hyūga,Team Guy,Might Guy
+Second,3.5,4.5,2,3,2.5,4,2.5,3,25,Neji Hyūga,Team Guy,Might Guy
+Third,4,4.5,2,3,2.5,4.5,3.5,3,27,Neji Hyūga,Team Guy,Might Guy
+First,0.5,3.5,0.5,1.5,3,4,3,1,17,Rock Lee,Team Guy,Might Guy
+Second,0.5,4,0.5,1.5,3.5,4,3,1,18,Rock Lee,Team Guy,Might Guy
+Third,0.5,5,1,2,4.5,4.5,3.5,1,22,Rock Lee,Team Guy,Might Guy
+First,2.5,2.5,1.5,2,1,3,1.5,2,16,Tenten,Team Guy,Might Guy
+Second,2.5,3.5,1.5,2.5,1,3.5,1.5,2,18,Tenten,Team Guy,Might Guy
+Third,3,3.5,1.5,3.5,1.5,3.5,2,2,20.5,Tenten,Team Guy,Might Guy
+First,3,5,3,3,5,5,5,2.5,31.5,Might Guy,Team Guy,Might Guy
+Second,3,5,3,3,5,5,5,2.5,31.5,Might Guy,Team Guy,Might Guy
+Third,3,5,3,3,5,5,5,2.5,31.5,Might Guy,Team Guy,Might Guy
+Third,5,4.5,3,4.5,4.5,4.5,5,4.5,35.5,Jiraiya,Sannin,Hiruzen Sarutobi
+Third,5,3.5,5,5,3.5,4.5,3.5,5,35,Orochimaru,Sannin,Hiruzen Sarutobi
+Third,5,5,3.5,5,5,3.5,4,4,35,Tsunade,Sannin,Hiruzen Sarutobi
+Third,5,3.5,3.5,4.5,3.5,4.5,4,3.5,32,Deidara,Akatsuki,
+Third,5,4.5,3,3,4,3.5,5,3.5,31.5,Hidan,Akatsuki,
+Third,5,4.5,5,5,3.5,5,2.5,5,35.5,Itachi Uchiha,Akatsuki,
+Second,3,4,1,2.5,5,2,4,2,23.5,Jūzō Biwa,Akatsuki,
+Third,5,4,3,4.5,4,4,4.5,3.5,32.5,Kakuzu,Akatsuki,
+Third,4.5,4.5,2.5,3.5,5,4,5,3.5,32.5,Kisame Hoshigaki,Akatsuki,
+,,,,,,,,,,Konan,Akatsuki,
+,,,,,,,,,,Nagato,Akatsuki,
+Third,5,3.5,5,5,3.5,4.5,3.5,5,35,Orochimaru,Akatsuki,
+Third,5,4,4,5,3,4.5,5,4,34.5,Sasori,Akatsuki,
+Second,3,2,1.5,1,2,3,2.5,3,18,Tobi/ Obito Uchiha,Akatsuki,
+,,,,,,,,,,White Zetsu,Akatsuki,
+,,,,,,,,,,Black Zetsu,Akatsuki,
