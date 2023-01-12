@@ -1,40 +1,5 @@
 FROM rocker/geospatial:4.2.2
 
-# RUN R --slave -e "install.packages(c( 'tidyverse', \
-#         'colorspace', \
-#         'corrr', \
-#         'cowplot', \
-#         'ggdark', \
-#         'ggforce', \
-#         'ggrepel', \
-#         'ggridges', \
-#         'ggsci', \
-#         'ggtext', \
-#         'ggthemes', \
-#         'grid', \
-#         'gridExtra', \
-#         'patchwork', \
-#         'rcartocolor', \
-#         'scico', \
-#         'showtext', \
-#         'shiny', \
-#         'plotly', \
-#         'highcharter', \
-#         'echarts4r', \
-#         'rnaturalearth', \
-#         'rnaturalearthdata', \
-#         'gggibbous', \
-#         'ggimage', \
-#         'ragg', \
-#         'maps', \
-#         'tidytuesdayR', \
-#         'esquisse', \
-#         'geomtextpath', \
-#         'janitor', \
-#         'git2r', \
-#         'devtools' \
-#         ))"
-
 RUN R --slave -e "install.packages('tidyverse')"
 RUN R --slave -e "install.packages('colorspace')"
 RUN R --slave -e "install.packages('corrr')"
