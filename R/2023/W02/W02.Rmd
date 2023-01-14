@@ -1,0 +1,404 @@
+---
+title: "2023 W02"
+author: "Aditya MS"
+date: "2023-01-10"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Libraries, Configs, Data imports
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library import and config}
+library(tidyverse)
+library(sf)
+library(ggtext)
+library(rnaturalearth)
+library(patchwork)
+
+library(showtext)
+library(rcartocolor)
+
+library(magick)
+
+font_add(
+  family     = "playfair",
+  regular    = "../../../fonts/Playfair-Display/PlayfairDisplay-Regular.ttf",
+  bold       = "../../../fonts/Playfair-Display/PlayfairDisplay-SemiBold.ttf",
+  italic     = "../../../fonts/Playfair-Display/PlayfairDisplay-Italic.ttf",
+  bolditalic = "../../../fonts/Playfair-Display/PlayfairDisplay-SemiBoldItalic.ttf"
+)
+
+font_add(family  = "hepta",
+         regular = "../../../fonts/Hepta-Slab/HeptaSlab-Regular.ttf",
+         bold    = "../../../fonts/Hepta-Slab/HeptaSlab-SemiBold.ttf",)
+
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+
+DPI <- 500
+showtext_auto(enable = TRUE)
+showtext_opts(dpi = DPI)
+```
+
+```{r import data}
+tuesdata     <- tidytuesdayR::tt_load(2023, week = 02)
+
+public       <- tuesdata$PFW_2021_public
+count        <- tuesdata$PFW_count_site_data_public_2021
+
+species_data <-
+  readxl::read_excel("FeederWatch_Data_Dictionary.xlsx",
+                     sheet = "Species Codes",
+                     skip = 1) |>
+  janitor::clean_names()
+
+```
+
+```{r US map data}
+us <-   ne_states("united states of america", returnclass = "sf") |>
+  filter(!name %in% c("Alaska", "Hawaii")) 
+```
+
+# Data wrangle
+```{r Region wise data wrangle}
+
+# region wise data stats
+region_df <-
+  public |>
+  select(subnational1_code, Year, species_code, how_many) |>
+  rename(loc_code = subnational1_code) |>
+  filter(Year == 2021) |>
+  select(-Year) |>
+  arrange(loc_code, species_code) |>
+  
+  left_join(us |>  select(iso_3166_2, region),
+            by = c("loc_code" = "iso_3166_2")) |>
+  filter(!str_detect(loc_code, "^CA-*")) |>
+  
+  # number of occourances of each species
+  group_by(region, species_code) |>
+  summarise(count = sum(how_many)) |>
+  ungroup() |>
+  
+  # how many kinds of species species are spotted?
+  group_by(region) |>
+  mutate(count_species = n_distinct(species_code)) |>
+  
+  # filter most common species by location
+  arrange(region, desc(count), .by_group = T) |>
+  mutate(rnk = rank(-count, ties.method = 'min')) |>
+  filter(rnk == 1) |>
+  select(-rnk) |>
+  ungroup() |>
+  drop_na() |>
+  
+  # get scientific name and common name of each species
+  left_join(
+    species_data |> select(species_code, sci_name, primary_com_name),
+    by = ("species_code" = "species_code")
+  )
+
+
+# centroid of region - to mark region labels
+region_centroid <-
+  us |>
+  left_join(region_df, by = c("region" = "region")) |>
+  
+  group_by(region) |>
+  summarise(st_union(geometry)) |>
+  st_centroid() |>
+  st_coordinates() |>
+  as_tibble() |>
+  
+  # Put back other data
+  cbind(region_df)
+
+# map data by region
+region_map_df <-
+  us |>
+  left_join(region_df, by = c("region" = "region")) |>
+  
+  group_by(region) |>
+  summarise(
+    species_code  = max(species_code),
+    count         = max(count),
+    count_species = max(count_species)
+  )
+
+
+bird_info <-
+  tibble(
+    species_code   = c("houspa", "daejun", "amegfi", "houfin"),
+    text_color     = rep("grey60", 4),
+    
+    habitat        = c("Towns", "Forests", "Open Woodlands", "Towns"),
+    habitat_color  = rep("#0099FF", 4),
+    
+    food           = c("Omnivore", "Seeds", "Seeds", "Seeds"),
+    food_color     = rep("#719C27", 4),
+    
+    nesting        = c("Cavity", "Ground", "Shrub", "Tree"),
+    nesting_color  = rep("#FFCC33", 4),
+    
+    behavior       = c(
+      "Ground Forager",
+      "Ground Forager",
+      "Foliage Gleaner",
+      "Ground Forager"
+    ),
+    behavior_color = rep("#E07322", 4)
+  )
+
+```
+
+
+```{r state wise data wrangle}
+
+state_df <-
+  public |>
+  select(subnational1_code, Year, species_code, how_many) |>
+  rename(loc_code = subnational1_code) |>
+  filter(!str_detect(loc_code, "^CA-*")) |>
+  filter(Year == 2021) |>
+  select(-Year) |>
+  arrange(loc_code, species_code) |>
+  
+  # number of occourances of each species
+  group_by(loc_code, species_code) |>
+  summarise(count = sum(how_many)) |>
+  ungroup() |>
+  
+  # how many kinds of species species are spotted?
+  group_by(loc_code) |>
+  mutate(count_species = n_distinct(species_code)) |>
+  
+  # filter most common species by location
+  arrange(loc_code, desc(count), .by_group = T) |>
+  mutate(rnk = rank(-count, ties.method = 'min')) |>
+  filter(rnk == 1) |>
+  select(-rnk) |>
+  ungroup() |>
+  drop_na()
+
+```
+
+
+
+# Basic Plots
+```{r map plot}
+
+title_size            <- 80 / .pt
+title_color           <- "grey25"
+region_size           <- 9 / .pt
+region_box_buff       <- unit(7, "point")
+region_box_r          <-  unit(5, "point")
+
+legend_title_size     <- 20 / .pt
+legend_text_size      <- 18 / .pt
+legend_title_margin   <- margin(b = 8 / .pt)
+legend_text_margin    <- margin(t = 6 / .pt)
+
+bar_width             <- 20
+bar_height            <- 0.75
+  
+  
+  
+  map_plot_detailed <-
+    us |>
+    left_join(state_df, by = c("iso_3166_2" = "loc_code")) |>
+    
+    # basic plot
+    ggplot() +
+    # base map
+    geom_sf() +
+    # fill states by species count
+    geom_sf(aes(fill = count_species), color = NA,) +
+    # mark region boundaries
+    geom_sf(data  = region_map_df,
+            color = "grey20",
+            fill  = NA) +
+    
+    scale_fill_gradientn(
+      colors = c(
+        "#d2fbd4",
+                 "#a5dbc2",
+                 "#7bbcb0",
+                 "#559c9e",
+                 "#3a7c89",
+                 "#235d72",
+                 "#123f5a"
+      ),
+      guide = guide_colourbar(
+        barwidth       = bar_width,
+        barheight      = bar_height,
+        title          = "number of bird species",
+        title.position = "top",
+        title.hjust    = 0.5,
+        draw.llim      = TRUE,
+        draw.ulim      = TRUE,
+      )
+    ) +
+    
+    # label regions at centroid of region
+    # ggrepel::geom_label_repel(
+    geom_label(
+      data          = region_centroid,
+      aes(x = X, y = Y, label = region),
+      family        = "hepta",
+      fontface      = "bold",
+      color         = "grey30",
+      size          = region_size,
+      label.padding = region_box_buff,
+      label.r       = region_box_r
+      
+    ) +
+    
+    # labels
+    labs(title = "Most Common birds in USA - 2021", ) +
+    
+    # THEMES
+    theme_void(base_size = 12 / .pt) +
+    theme(
+      plot.background   = element_rect(fill = 'transparent', color = NA),
+      plot.title        = element_text(
+        family          = "hepta",
+        size            = title_size,
+        color           = title_color,
+        hjust           = 0.5
+      ),
+      plot.caption      = element_markdown(
+        family          = "hepta",
+        color           = "grey30",
+        hjust           = 1
+      ),
+      text              = element_text(family = c("hepta")),
+      
+      legend.position   = c(0.5, 0.01),
+      legend.direction  = "horizontal",
+      legend.background = element_blank(),
+      legend.title      = element_text(size = legend_title_size, margin = legend_title_margin),
+      legend.text       = element_text(size = legend_text_size, margin = legend_text_margin),
+    )
+  
+
+```
+
+
+```{r function to generate region wise bird plots}
+
+region_title_size <- 40 / .pt
+bird_name         <- 30 / .pt
+bird_text         <- 25 / .pt
+def_text_color    <-  "grey40"
+  
+# pt_color = particulars-type text color
+# pt_size  = particulars-type text size
+# pt       = particulars-type
+# pv_color = particulars-value text color
+# pv_size  = particulars-value text color
+# pv       = particulars-value
+
+content_fn <-
+  function(pt_color,
+           pt_size,
+           pt,
+           pv_color,
+           pv_size,
+           pv) {
+    glue::glue(
+      "<span style='color:{pt_color};font-family:hepta;font-size:{pt_size}pt;'>{pt}: </span><span style='color:{pv_color};font-family:hepta;font-size:{pv_size}pt;'>**{pv}**  </span>"
+    )
+    
+  }
+
+region_birds <- function(REGION) {
+  region_df |>
+    left_join(bird_info, by = "species_code") |>
+    filter(region == REGION) |>
+    mutate(
+      content = glue::glue(
+        "<span style='font-family:hepta;font-size:{region_title_size}pt;color:{def_text_color};'>**{region}**</span><br>
+        <img src=assets/{species_code}.png height='100'><br>
+        <span style='font-family:playfair;font-size:{bird_name}pt;color:{def_text_color};'> **{primary_com_name}**</span><br>
+        <span style='font-family:playfair;font-size:{bird_name}pt;color:{def_text_color};'> *{sci_name}*</span><br>
+        {content_fn(text_color, bird_text, 'Habitat', habitat_color, bird_text, habitat)} {content_fn(text_color, bird_text, 'Food', food_color, bird_text, food)}<br>
+        {content_fn(text_color, bird_text, 'Nesting', nesting_color, bird_text, nesting)} {content_fn(text_color, bird_text, 'Behavior', behavior_color, bird_text, behavior)}<br><br>
+        <span style='font-family:hepta;font-size:{bird_text}pt;color:{def_text_color};'>{region} has **{count_species}** different bird species.</span>"
+      )
+    ) |>
+    
+    ggplot() +
+    geom_richtext(
+      x           = 0,
+      y           = 0,
+      aes(label   = content),
+      hjust       = 0.5,
+      fill        = NaN,
+      label.color = NaN,
+    ) +
+    xlim(c(-1, 1)) + ylim(c(-1, 1)) +
+    coord_cartesian(clip = "off") +
+    theme_void() +
+    theme(
+      text = element_text(color = "grey40"),
+      plot.background = element_rect(fill = 'transparent', color = NA)
+    )
+  
+}
+
+```
+
+# Compose plots
+```{r compose plots}
+
+caption_size  <- 25 / .pt
+caption_color <- title_color
+
+left          <- region_birds("West") / region_birds("South")
+right         <- region_birds("Midwest") / region_birds("Northeast")
+
+plot <-
+  (left | map_plot_detailed | right) + plot_layout(widths = c(1, 3, 1)) + plot_annotation(
+       caption = glue::glue(
+         "<span style='font-size:{caption_size}pt;font-family:hepta;color:{caption_color}'>visualization by **Aditya MS**  | Data by **feederwatch.org** , **allaboutbirds.org**  | #TidyTuesday 2023 W02</span>"
+       )
+     ) &
+  theme(
+    plot.caption = element_markdown(),
+    plot.margin = margin(30 / .pt, 30 / .pt, 30 / .pt, 30 / .pt),
+    plot.background = element_rect(fill = "#f6fef6")
+  )
+
+# Save a full res version
+ggsave(
+  "../../../Plots/2023/W02/2023_02_FR.png",
+  plot  = plot,
+  w     = 15,
+  h     = 8,
+  dpi   = DPI,
+  units = "in"
+)
+
+# rescale it for Standard res
+image_write(image_scale(image_read(
+  "../../../Plots/2023/W02/2023_02_FR.png"
+), "40%"),
+path   = "../../../Plots/2023/W02/2023_02_SD.png",
+format = "png")
+
+```
+
+
+```{r session}
+
+Sys.time()
+git2r::repository()
+sessionInfo()
+
+```
+
+
