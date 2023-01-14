@@ -36,6 +36,12 @@ RUN R --slave -e "install.packages('devtools')"
 
 
 RUN R --slave -e 'devtools::install_github(c("ropensci/rnaturalearthhires"))'
+RUN R --slave -e 'devtools::install_github("yutannihilation/ggsflabel")'
+RUN R --slave -e 'devtools::install_github("seasmith/AlignAssign")'
+RUN R --slave -e 'devtools::install_github("tidyverse/reprex")'
+
+RUN R --slave -e 'install.packages("rcartocolor")'
+RUN R --slave -e 'install.packages("datapasta")'
 
 # create an R user
 ENV USER rstudio
