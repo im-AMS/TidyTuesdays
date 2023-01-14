@@ -37,7 +37,7 @@ My contributions to the [#TidyTuesday challenge](https://github.com/rfordatascie
 ***
 ### [2023 Week 02:](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2023/W02) Project FeederWatch
 
-![./Plots/2023/W02/2023_02_FR.png](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2023/W01/2023_02_FR.png)
+![./Plots/2023/W02/2023_01_FR.png](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2023/W01/2023_01_FR.png)
 
 ### [2023 Week 01:](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2023/W01) \#BYOD - Naruto
 
