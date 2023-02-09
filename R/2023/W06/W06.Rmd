@@ -1,0 +1,560 @@
+---
+title: "2023 W06"
+author: "Aditya MS"
+date: "2023-02-06"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+# Libraries, Configs, Data imports
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library import and config}
+library(tidyverse)
+library(lubridate)
+library(glue)
+library(ggtext)
+library(ggrepel)
+library(ggsankey)
+library(scales)
+
+library(ggdist)
+library(showtext)
+
+library(magick)
+
+
+font_add(family = "bebas-neue", regular = "../../../fonts/Bebas-Neue/BebasNeue-Regular.ttf")
+
+font_add(
+  family = "manrope",
+  regular = "../../../fonts/Manrope/Manrope-Regular.ttf",
+  bold  = "../../../fonts/Manrope/Manrope-Bold.ttf"
+  )
+
+font_add(
+  family     = "Real-Head-Pro",
+  regular    = "../../../fonts/Real-Head-Pro/Real-Head-Pro-Light.ttf",
+  bold       = "../../../fonts/Real-Head-Pro/Real-Head-Pro-Medium.ttf"
+  # light      = "../../../fonts/Real-Head-Pro/Real-Head-Pro-Thin.ttf"
+)
+
+font_add(
+  family = "Blex-Mono-NF",
+  regular    = "../../../fonts/Blex-Mono-NF/Blex-Mono-NFM.ttf"
+)
+
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+
+DPI <- 500
+showtext_auto(enable = TRUE)
+showtext_opts(dpi = DPI)
+
+```
+
+Inspiration <https://twitter.com/nrennie35/status/1622888396514332676/photo/1> <https://github.com/nrennie/tidytuesday/blob/main/2023/2023-02-07/20230207.R>
+
+```{r}
+
+big_tech_stock_prices <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-02-07/big_tech_stock_prices.csv')
+big_tech_companies <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-02-07/big_tech_companies.csv')
+
+faang_names <-
+tibble::tribble(
+  ~stock_symbol,  ~company,   ~color_hex,
+         "AAPL",   "Apple", "#A2AAAD",
+         "AMZN",  "Amazon", "#ff9900",
+        "GOOGL",  "Google", "#34a853",
+         "META",    "Meta", "#0064e0",
+         "NFLX", "Netflix", "#e50914"
+  )
+
+
+
+```
+
+# Data Wrangle
+
+```{r}
+
+
+
+# line plot data
+returns <-
+  big_tech_stock_prices |>
+  filter(stock_symbol %in% c("META", "AMZN", "AAPL", "NFLX", "GOOGL")) |>
+  group_by(stock_symbol) |>
+  arrange(stock_symbol, date) |>
+  mutate(open_ref = case_when(row_number() == 1 ~ open)) |>
+  fill(open_ref, .direction = "down") |>
+  mutate(running_return = (close / open_ref - 1) * 100) |>
+  select(stock_symbol, date, running_return) |>
+  filter(date <= as.Date("2022-12-29")) |>
+  
+  left_join(faang_names, by = c("stock_symbol" = "stock_symbol")) |>
+  mutate(label = if_else(
+    row_number() == n(),
+    glue(
+      "{company}: +{formatC(running_return, format='d', big.mark=',')}%"
+    ),
+    NA_character_
+  )) |>
+  ungroup()
+
+
+
+# Data Wrangle for dot dist plot
+df <-
+  big_tech_stock_prices |>
+  mutate(year = year(date)) |>
+  filter(stock_symbol %in% c("META", "AMZN", "AAPL", "NFLX", "GOOGL")) |>
+  mutate(change = (close / open - 1) * 100) |>
+  ungroup() |>
+  group_by(stock_symbol) |>
+  arrange(stock_symbol, date)
+  
+df_label_end_points <-
+df |> 
+  filter(year == 2022) |> 
+  group_by(stock_symbol) |> 
+  summarise( max_change = max(change), min_change = min(change)) |> 
+  ungroup() |> 
+  pivot_longer(
+    cols = c("max_change", "min_change"),  names_to = "change_kind", values_to = "change"
+  ) |> 
+  mutate(
+    label = glue("△<br>{round(change,2)}%"),
+  )
+  
+
+df_label_sd <-
+df |> 
+  select(stock_symbol, date, change) |> 
+  filter(year(date) == 2022) |> 
+  group_by(stock_symbol) |> 
+  arrange(stock_symbol, date) |> 
+  summarise(sd = sd(change), median = median(change), mean = mean(change)) |> 
+  arrange(sd) |> 
+  mutate(label = glue("<span style='font-family:manrope;'>σ</span> = {round(sd,2)}%"))
+
+
+df_order <- 
+df_label_sd |> 
+  pull(stock_symbol)
+  
+
+```
+
+# Plot 1
+
+```{r, fig.width=15, fig.width=15}
+
+
+
+base_fnt   <- "Real-Head-Pro"
+base_color <- "grey25"
+  
+dist_title_fnt_size <- 75 / .pt
+dist_title          <- "<span style='color:#e50914'>**Netflix**</span> is the most volatile FAANG stock in **2022**"
+
+# binwidth <-  0.1
+binwidth   <-  NA
+dotsize    <- 1
+dot_color  <- "grey70"
+
+interval_nudge_y <- 0.25 / .pt
+interval_size    <-  10 /.pt
+
+company_fnt       <- "Real-Head-Pro"
+# company_fnt     <- "bebas-neue"
+company_fnt_size  <- 48 / .pt
+company_fnt_color <- "grey90"
+company_nudge_y   <- 0.08
+company_fnt_x     <- -11
+
+point_fnt         <- "Real-Head-Pro"
+point_fnt_size    <- 15 / .pt
+point_fnt_color   <- "grey40"
+point_fnt_nudge_y <- -0.45 / .pt
+
+ref_line_size        <- 1.3 / .pt
+ref_line_type        <- "dashed"
+ref_line_color       <- "grey80"
+ref_line_fnt         <- "Real-Head-Pro"
+ref_line_fnt_size    <- 12 /.pt
+ref_line_fnt_color   <- "grey80"
+ref_line_fnt_nudge_x <- 0 / .pt
+ref_line_fnt_nudge_y <- -1.5 /.pt
+
+
+dist_plot <- 
+df |>
+  filter(year == 2022) |>
+  ggplot(aes(x = change, y = factor(stock_symbol, level = df_order), )) +
+  # Ref lines
+  geom_vline(
+    xintercept = c(-5, 0, 5),
+    linewidth = ref_line_size,
+    color = ref_line_color,
+    linetype = ref_line_type
+  ) +
+  # annotate(
+  geom_richtext(
+    data = tibble(
+      x = c(-5 , 0, 5),
+      y = c("AAPL", "AAPL", "AAPL"),
+      label = c(-5, 0, 5)
+    ),
+    aes (x = x, y = y , label = label),
+    
+    family = ref_line_fnt,
+    fontface = "bold",
+    size = ref_line_fnt_size,
+    color = ref_line_fnt_color,
+    nudge_x = ref_line_fnt_nudge_x,
+    nudge_y = ref_line_fnt_nudge_y,
+    # fill = NaN,
+    label.color = NaN,
+    hjust = 0.5,
+  ) +
+  # Dots Dist
+  geom_dots(
+    binwidth = binwidth,
+    dotsize = dotsize,
+    fill = dot_color,
+    color = NA
+  ) +
+  # Dist heat map
+  stat_interval(
+    position = position_dodge(width = interval_nudge_y, preserve = "single"),
+    point_interval = "median_hdi",
+    .width = c(.25, .5, .95, 1),
+    size = interval_size
+  ) +
+  # Company Names
+  geom_richtext(
+    data = faang_names,
+    aes(y = stock_symbol, label = company),
+    
+    x = company_fnt_x,
+    family = company_fnt,
+    fontface = "bold",
+    size = company_fnt_size,
+    color = company_fnt_color,
+    nudge_y = company_nudge_y,
+    hjust = 0,
+    fill = NaN,
+    label.color = NaN,
+  ) +
+  # label Dist End points
+  geom_richtext(
+    data = df_label_end_points,
+    aes(y = stock_symbol, x = change, label = label),
+    
+    family = point_fnt,
+    fontface = "bold",
+    size = point_fnt_size,
+    color = point_fnt_color,
+    nudge_y = point_fnt_nudge_y,
+    fill = NaN,
+    label.color = NaN,
+    hjust = 0.5,
+  ) +
+  # Label Std dev
+  geom_richtext(
+    data = df_label_sd,
+    aes(y = stock_symbol, label = label),
+    x = 0,
+    
+    family = point_fnt,
+    fontface = "bold",
+    size = point_fnt_size,
+    color = point_fnt_color,
+    nudge_y = point_fnt_nudge_y,
+    fill = NaN,
+    label.color = NaN,
+    hjust = 0,
+  ) +
+  
+  
+  # Tweak Looks
+  scale_color_manual(values = c("grey85", "#ccbe9b", "#e8984e", "#94350b"),
+                     guide = F) +
+  
+  coord_cartesian(clip = "off",
+                  xlim = c(-10.5, 10)) +
+  scale_y_discrete(limits = df_order) +
+  theme_void() +
+  labs(title = dist_title) +
+  theme(
+    legend.position = "none",
+    plot.title = element_markdown(
+      family = base_fnt,
+      color = base_color,
+      size = dist_title_fnt_size,
+      hjust = 0.5
+    ),
+    plot.margin = margin(
+      t = 30,
+      l = 25,
+      b = 30,
+      r = 30
+    ),
+    plot.background = element_rect(fill = "white", color = NA)
+  )
+
+ggsave(
+  plot = dist_plot,
+  "../../../Plots/2023/W06/2023_06_dist_FR.png",
+  w     = 15,
+  h     = 15,
+  dpi   = DPI,
+  units = "in"
+)
+
+```
+
+# Plot 2
+
+```{r, fig.width=15, fig.height=8}
+
+line_title <- "<span style='color:#e50914'>**Netflix**</span> has the highest return among FAANG Stocks since **2010**"
+
+title_fnt_size  <- 75 / .pt
+axis_fnt_size   <- 40 / .pt
+axis_fnt_color  <- "grey50"
+legend_fnt_size <- 15 / .pt
+legend_x_nudge  <- 1
+
+tick_size  <- 1 / .pt
+tick_color <- "grey88"
+  
+line_size  <- 1.5 / .pt
+line_alpha <- 0.75
+
+
+line_plot <- 
+returns |>
+  ggplot(aes(x = date, y = running_return, color = color_hex, )) +
+  # Line plot
+  geom_line(linewidth = line_size, alpha = line_alpha) +
+  # Line end label
+  geom_text_repel(
+    aes(label = label,
+        color = color_hex),
+    family = base_fnt,
+    size = legend_fnt_size,
+    fontface = "bold",
+    
+    # force        = 0.5,
+    # nudge_x      = legend_x_nudge,
+    direction    = "y",
+    hjust        = 0,
+    # segment.size = 0.2,
+    xlim = c(2021, Inf),
+  ) +
+  
+  # Tweak Looks
+  scale_x_date(
+    limits = as.Date(c("2010-01-01", "2023-01-01")),
+    breaks = scales::breaks_width("2 years"),
+    labels = scales::label_date(format = "%Y"),
+    expand = c(0, NA)
+  ) +
+  scale_y_continuous(breaks = seq(0, 9000, 2000),
+                     labels = label_comma(suffix = "%")) +
+  coord_cartesian(clip = "off") +
+  # interprets colors from aes(color)
+  scale_color_identity() +
+  labs(title = line_title) +
+  theme_void() +
+  theme(
+    legend.position = "none",
+    plot.margin = margin(
+      t = 20,
+      l = 50,
+      b = 20,
+      r = 130
+    ),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_line(linewidth = tick_size, colour = tick_color),
+    text = element_text(
+      family = base_fnt,
+      face = "bold",
+      color = base_color
+    ),
+    axis.title = element_blank(),
+    
+    plot.background = element_rect(fill = "white", color = NA),
+    plot.title = element_markdown(size = title_fnt_size, hjust = 0.5, face = "plain"),
+    axis.text = element_text(size = axis_fnt_size, color = axis_fnt_color),
+    
+  )
+
+
+ggsave(
+  plot = line_plot, 
+  "../../../Plots/2023/W06/2023_06_line_FR.png",
+  w     = 15,
+  h     = 8,
+  dpi   = DPI,
+  units = "in"
+)
+```
+
+# Text
+
+```{r, fig.width=15, fig.height=7}
+
+cc_fnt_size <-  55 /.pt
+cc_fnt_line_height <- 0.1 * cc_fnt_size
+
+
+
+
+cc_title <- 
+  "What really happened to the FAANG stocks since **2010**?"
+cc_title_fnt_size <- 120 / .pt
+cc_title_fnt_margin <- cc_title_fnt_size * 1.2
+
+footer <- 
+  "<span style='font-family:Blex-Mono-NF'></span> aditya-ms 
+<span style='font-family:Blex-Mono-NF'>•</span>
+<span style='font-family:Blex-Mono-NF'></span> im-AMS 
+<span style='font-family:Blex-Mono-NF'>•</span> 
+Source: **Kaggle** <span style='font-family:Blex-Mono-NF'>•</span> W06 2023 #TidyTuesday"
+
+footer_fnt_size <- 45 /.pt
+footer_fnt_color <-  "grey50"
+
+
+returns_table <-
+df |> 
+  ungroup() |> 
+  filter(stock_symbol %in% c("META", "AMZN", "AAPL", "NFLX","GOOGL")) |>
+  select(stock_symbol, date, open, close) |> 
+  group_by(stock_symbol) |> 
+  filter(date == min(date) | date == max(date)) |> 
+  summarise(
+    initial = case_when(date == min(date) ~ open),
+    final = case_when(date == max(date) ~ close),
+         ) |> 
+  fill(initial, .direction = "down") |> 
+  fill(final, .direction = "up") |> 
+  unique() |> 
+  mutate(
+    abs_return = (final/initial -1)*100,
+    cagr = ((final/initial)^(1/12) -1) * 100
+    ) |> 
+  left_join(faang_names)
+
+returns_stat_func <- 
+  function(stock, return_kind){
+  returns_table |> 
+  mutate(
+    abs_return = glue("<span style='color:{color_hex}'>**+{formatC(abs_return, format='d', big.mark=',')}%**</span>"),
+    cagr = glue("<span style='color:{color_hex}'>**+{round(cagr,2)}%**</span>")
+  ) |> 
+  filter(stock_symbol == stock) |> 
+  select(contains(return_kind)) |> 
+  pull()
+  } 
+
+sd_stat_func <-
+function(stock){
+  df_label_sd |> 
+    left_join(faang_names) |> 
+    filter(stock_symbol == stock) |> 
+    mutate(
+      label = glue("<span style='color:{color_hex}'>**{label}**</span>")
+    ) |> 
+  pull(label)
+}
+
+
+cc <-
+glue("The line chart(below) depicts the returns on FAANG stocks if they were invested on **Jan 1,2010** and held until **Dec 29,2022**.<br> 
+     Clearly, <span style='color:#e50914'>**Netflix**</span> has the higest absolute return of {returns_stat_func('NFLX','abs')} or {returns_stat_func('NFLX','cagr')} annually. 
+     <span style='color:#A2AAAD'>**Apple**</span> has {returns_stat_func('AAPL','abs')} or {returns_stat_func('AAPL','cagr')},<br>
+     <span style='color:#ff9900'>**Amazon**</span> has {returns_stat_func('AMZN','abs')} or {returns_stat_func('AMZN','cagr')},
+     <span style='color:#34a853'>**Google**</span> has {returns_stat_func('GOOGL','abs')} or {returns_stat_func('GOOGL','cagr')},
+     <span style='color:#0064e0'>**Meta**</span> has {returns_stat_func('META','abs')} or {returns_stat_func('META','cagr')}.
+     <br><br>
+     The Distribution chart (right) shows the distribution of daily returns of each FAANG stock in **2022**.<br>
+     <span style='color:#e50914'>**Netflix**</span> is the most volatile stock among FAANG with standard deviation of {sd_stat_func('NFLX')}, followed by <br>
+     <span style='color:#0064e0'>**Meta**</span> with {sd_stat_func('META')},
+     <span style='color:#ff9900'>**Amazon**</span> with {sd_stat_func('AMZN')},
+     <span style='color:#34a853'>**Google**</span> with {sd_stat_func('GOOGL')}, and
+     <span style='color:#A2AAAD'>**Apple**</span> with {sd_stat_func('AAPL')}.
+     ")
+
+text_plot <- 
+ggplot()+
+  labs(
+    title = cc_title,
+    subtitle = cc,
+    caption = footer)+
+  theme_void()+
+  theme(
+    plot.title = element_markdown(family = base_fnt, color = base_color, size = cc_title_fnt_size, margin = margin(b = cc_title_fnt_margin)),
+    plot.subtitle = element_markdown(family = base_fnt, color = base_color, size = cc_fnt_size, lineheight = cc_fnt_line_height),
+    plot.caption = element_markdown(family = base_fnt, color = footer_fnt_color, size = footer_fnt_size, hjust = 0.5, vjust = 0.5),
+    plot.title.position = "plot",
+    plot.margin = margin(t = 30, l = 50, r = 30, b = 10),
+    plot.background = element_rect(fill = "white", color = NA)
+    )
+
+ggsave(
+  plot = text_plot,
+  "../../../Plots/2023/W06/2023_06_text_FR.png",
+  w     = 15,
+  h     = 7,
+  dpi   = DPI,
+  units = "in"
+)
+
+```
+
+# Compose plots
+
+```{r, fig.height=17, fig.width=32}
+text_plot <-  image_read("../../../Plots/2023/W06/2023_06_text_FR.png")
+line_plot <-  image_read("../../../Plots/2023/W06/2023_06_line_FR.png")
+dist_plot <-  image_read("../../../Plots/2023/W06/2023_06_dist_FR.png")
+
+# image_write(
+#   image_append(
+#     image_append(
+#       c(text_plot, line_plot),
+#       stack = TRUE
+#     ),
+#   dist_plot),
+#   "../../../Plots/2023/W06/2023_06_FR.png",
+#   format = "png"
+# )
+
+# If cache error, 
+# edit file from /etc/ImageMagick-6/policy.xml
+# increase memory value in
+# <policy domain="resource" name="memory" value="10GiB"/>
+# if Error still persists, use image magick from terminal with
+# convert 2023_06_text_FR.png 2023_06_line_FR.png -gravity center -append out.png
+# convert out.png 2023_06_dist_FR.png -gravity center +append 2023 _06_FR.png
+# rm out.png
+
+```
+
+```{r session}
+
+Sys.time()
+git2r::repository()
+sessionInfo()
+
+```

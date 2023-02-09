@@ -43,6 +43,11 @@ RUN R --slave -e 'devtools::install_github("tidyverse/reprex")'
 RUN R --slave -e 'install.packages("rcartocolor")'
 RUN R --slave -e 'install.packages("datapasta")'
 
+RUN R --slave -e 'install.packages("skimr")'
+
+RUN R --slave -e 'devtools::install_github("davidsjoberg/ggsankey")'
+RUN R --slave -e "install.packages('ggdist')"
+
 # create an R user
 ENV USER rstudio
 # set password

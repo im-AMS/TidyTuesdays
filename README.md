@@ -20,6 +20,8 @@ My contributions to the [#TidyTuesday challenge](https://github.com/rfordatascie
   <summary>Contributions in chronological order (click to expand)</summary>
 
 <!-- toc -->
+2023-01-10 [Big Tech Stock Prices](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2023/W06)
+
 2023-01-10 [Project FeederWatch](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2023/W02)
 
 2023-01-03 [\#BYOD - Naruto](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2023/W01)
@@ -35,6 +37,11 @@ My contributions to the [#TidyTuesday challenge](https://github.com/rfordatascie
 </details>
 
 ***
+
+### [2023 Week 06:](https://github.com/im-AMS/TidyTuesdays/blob/main/R/2023/W06) What really happened to the FAANG stocks since 2010?
+
+![./Plots/2023/W06/2023_06_FR.png](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2023/W06/2023_06_FR.png)
+
 ### [2023 Week 02:](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2023/W02) Project FeederWatch
 
 ![./Plots/2023/W02/2023_02_FR.png](https://github.com/im-AMS/TidyTuesdays/blob/main/Plots/2023/W02/2023_02_FR.png)
