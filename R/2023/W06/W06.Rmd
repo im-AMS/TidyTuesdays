@@ -57,7 +57,6 @@ showtext_opts(dpi = DPI)
 
 ```
 
-Inspiration <https://twitter.com/nrennie35/status/1622888396514332676/photo/1> <https://github.com/nrennie/tidytuesday/blob/main/2023/2023-02-07/20230207.R>
 
 ```{r}
 
@@ -106,6 +105,13 @@ returns <-
   )) |>
   ungroup()
 
+# Label lifetime peak
+returns_max <- 
+returns |> 
+  group_by(stock_symbol) |> 
+  filter(running_return == max(running_return)) |> 
+  mutate(label = glue("+{round(running_return,0)}%")) |> 
+  ungroup()
 
 
 # Data Wrangle for dot dist plot
@@ -150,6 +156,7 @@ df_label_sd |>
 
 ```
 
+
 # Plot 1
 
 ```{r, fig.width=15, fig.width=15}
@@ -162,8 +169,8 @@ base_color <- "grey25"
 dist_title_fnt_size <- 75 / .pt
 dist_title          <- "<span style='color:#e50914'>**Netflix**</span> is the most volatile FAANG stock in **2022**"
 
-# binwidth <-  0.1
-binwidth   <-  NA
+binwidth <-  0.2
+# binwidth   <-  NA
 dotsize    <- 1
 dot_color  <- "grey70"
 
@@ -198,7 +205,7 @@ df |>
   ggplot(aes(x = change, y = factor(stock_symbol, level = df_order), )) +
   # Ref lines
   geom_vline(
-    xintercept = c(-5, 0, 5),
+    xintercept = c(-6, -3, 0, 3, 6),
     linewidth = ref_line_size,
     color = ref_line_color,
     linetype = ref_line_type
@@ -206,9 +213,9 @@ df |>
   # annotate(
   geom_richtext(
     data = tibble(
-      x = c(-5 , 0, 5),
-      y = c("AAPL", "AAPL", "AAPL"),
-      label = c(-5, 0, 5)
+      x = c(-6, -3, 0, 3, 6),
+      y = c("AAPL", "AAPL", "AAPL", "AAPL", "AAPL"),
+      label = c(-6, -3, 0, 3, 6)
     ),
     aes (x = x, y = y , label = label),
     
@@ -319,6 +326,7 @@ ggsave(
 
 ```
 
+
 # Plot 2
 
 ```{r, fig.width=15, fig.height=8}
@@ -337,10 +345,24 @@ tick_color <- "grey88"
 line_size  <- 1.5 / .pt
 line_alpha <- 0.75
 
+rect <-  tibble(data.frame(
+        xmin = as.Date(c("2020-01-01")),
+        xmax = as.Date(c("2022-01-01")),
+        ymin = c(0),
+        ymax = c(9000)
+      ))
 
-line_plot <- 
+line_plot <-
 returns |>
   ggplot(aes(x = date, y = running_return, color = color_hex, )) +
+  geom_rect(
+    data = rect,
+    inherit.aes=FALSE,
+    aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+    fill = "grey90",
+    color = NA,
+    alpha = 0.3,
+  )+
   # Line plot
   geom_line(linewidth = line_size, alpha = line_alpha) +
   # Line end label
@@ -358,6 +380,29 @@ returns |>
     # segment.size = 0.2,
     xlim = c(2021, Inf),
   ) +
+  # Label max points
+  geom_point(data = returns_max, aes(x = date, y = running_return))+
+  geom_text_repel(
+    data = returns_max,
+    aes(
+      x = date,
+      y = running_return,
+      label = label,
+      color = color_hex
+      ),
+    seed = 43,
+    family = base_fnt,
+    size = legend_fnt_size - 6/.pt ,
+    fontface = "bold",
+    segment.size = 1/.pt ,
+    force_pull = 0,
+    nudge_y = if_else(returns_max$stock_symbol %in% c("AMZN","AAPL"), 500, 0),
+
+    # Do not repel from top edge
+    ylim = c(-Inf, Inf),
+    # align all text to 2021
+    xlim = c(NA, as.numeric(as.Date("2021-01-01"))),
+  )+
   
   # Tweak Looks
   scale_x_date(
@@ -399,6 +444,7 @@ returns |>
   )
 
 
+
 ggsave(
   plot = line_plot, 
   "../../../Plots/2023/W06/2023_06_line_FR.png",
@@ -409,13 +455,43 @@ ggsave(
 )
 ```
 
+```{r}
+ggplot()+
+  geom_point(data = returns_max, aes(x = date, y = running_return))+
+  geom_text_repel(
+    data = returns_max,
+    aes(
+      x = date,
+      y = running_return,
+      label = label,
+      color = color_hex
+      ),
+    family = base_fnt,
+    # size = 
+    fontface = "bold",
+    
+    # point.padding = 80,
+    segment.curvature = -1e-20,
+    segment.linetype = 6,
+    nudge_x = -0.5,
+    nudge_y = 0.5,
+    # min.segment.length = unit(0, 'lines'),
+    max.overlaps = Inf,
+    box.padding = 10
+  )
+```
+
+
+
 # Text
 
 ```{r, fig.width=15, fig.height=7}
 
-cc_fnt_size <-  55 /.pt
-cc_fnt_line_height <- 0.1 * cc_fnt_size
+# cc_fnt_size <-  55 /.pt
+# cc_fnt_line_height <- 0.1 * cc_fnt_size
 
+cc_fnt_size <-  46 /.pt
+cc_fnt_line_height <- 0.1 * cc_fnt_size
 
 
 
@@ -492,7 +568,9 @@ glue("The line chart(below) depicts the returns on FAANG stocks if they were inv
      <span style='color:#0064e0'>**Meta**</span> with {sd_stat_func('META')},
      <span style='color:#ff9900'>**Amazon**</span> with {sd_stat_func('AMZN')},
      <span style='color:#34a853'>**Google**</span> with {sd_stat_func('GOOGL')}, and
-     <span style='color:#A2AAAD'>**Apple**</span> with {sd_stat_func('AAPL')}.
+     <span style='color:#A2AAAD'>**Apple**</span> with {sd_stat_func('AAPL')}. (*Bin width = {binwidth}%*).
+     <br><br>
+    If just returns are evaluated, investing a big portion of one's portfolio in <span style='color:#e50914'>**Netflix**</span> may result in a greater total portfolio return.<br> However, in recent trends, <span style='color:#e50914'>**Netflix**</span> has had a big drop and has the greatest intraday volatility in **2022**. If **investing** is the aim, <br>lowering portfolio exposure to <span style='color:#e50914'>**Netflix**</span> and boosting exposure to lower volatile equities like <span style='color:#A2AAAD'>**Apple**</span> is likely to deliver steady returns, <br>according to the statistics. To the contrary if **trading** is the goal, trading in the more volatile stocks might increase the chance of <br>generating intraday profit.
      ")
 
 text_plot <- 
@@ -525,9 +603,9 @@ ggsave(
 # Compose plots
 
 ```{r, fig.height=17, fig.width=32}
-text_plot <-  image_read("../../../Plots/2023/W06/2023_06_text_FR.png")
-line_plot <-  image_read("../../../Plots/2023/W06/2023_06_line_FR.png")
-dist_plot <-  image_read("../../../Plots/2023/W06/2023_06_dist_FR.png")
+# text_plot <-  image_read("../../../Plots/2023/W06/2023_06_text_FR.png")
+# line_plot <-  image_read("../../../Plots/2023/W06/2023_06_line_FR.png")
+# dist_plot <-  image_read("../../../Plots/2023/W06/2023_06_dist_FR.png")
 
 # image_write(
 #   image_append(
@@ -545,8 +623,8 @@ dist_plot <-  image_read("../../../Plots/2023/W06/2023_06_dist_FR.png")
 # increase memory value in
 # <policy domain="resource" name="memory" value="10GiB"/>
 # if Error still persists, use image magick from terminal with
-# convert 2023_06_text_FR.png 2023_06_line_FR.png -gravity center -append out.png
-# convert out.png 2023_06_dist_FR.png -gravity center +append 2023 _06_FR.png
+# convert 2023_06_text_FR.png 2023_06_line_FR.png -gravity center -append out.png &&
+# convert out.png 2023_06_dist_FR.png -gravity center +append 2023_06_FR.png &&
 # rm out.png
 
 ```
